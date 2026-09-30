@@ -1,7 +1,7 @@
 {
   "name": "phantombids-back",
   "version": "1.0.0",
-  "description": "Backend API para la plataforma de subastas PhantomBids",
+  "description": "Backend API para PhantomBids con arquitectura en capas",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -13,14 +13,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
+    "axios": "^1.20.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.3.1"
+    "dotenv": "^18.0.0",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.6.0",
+    "mongoose": "^9.9.5",
+    "morgan": "^1.12.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.14"
   }
 }
