@@ -3,7 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 
 // Middleware de manejo centralizado de errores
-import { errorHandler } from './middleware/errorHandler.js';
+import { errorHandler } from '../middleware/errorHandler.js';
 
 // Importación de enrutadores del proyecto PhantomBids
 import authRoutes from './routes/authRoutes.js';
@@ -11,6 +11,7 @@ import houseRoutes from './routes/houseRoutes.js';
 import auctionRoutes from './routes/auctionRoutes.js';
 import betRoutes from './routes/betRoutes.js';
 import rankingRoutes from './routes/rankingRoutes.js';
+import cursedObjectRoutes from './routes/cursedObjectRoutes.js'; // <-- NUEVO: Importar las rutas de objetos malditos
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/houses', houseRoutes);
 app.use('/api/auctions', auctionRoutes);
 app.use('/api/bets', betRoutes);
 app.use('/api/rankings', rankingRoutes);
+app.use('/api/objects', cursedObjectRoutes); // <-- NUEVO: Registrar el enrutador de objetos malditos
 
 // Ruta base de chequeo de estado
 app.get('/', (req, res) => {

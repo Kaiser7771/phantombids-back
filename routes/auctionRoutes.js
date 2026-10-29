@@ -5,19 +5,9 @@ import {
   closeAuction, 
   getAuctionById 
 } from '../controllers/auctionController.js';
-import { 
-  createCursedObject, 
-  getAllCursedObjects, 
-  getCursedObjectById 
-} from '../controllers/cursedObjectController.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
-
-// --- RUTAS DE OBJETOS MALDITOS ---
-router.get('/objects', getAllCursedObjects);
-router.get('/objects/:id', getCursedObjectById);
-router.post('/objects', verifyToken, createCursedObject);
 
 // --- RUTAS DE SUBASTAS FANTASMA ---
 router.post('/', verifyToken, createAuction);
