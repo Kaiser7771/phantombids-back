@@ -1,9 +1,9 @@
-import express from 'express';
-import HauntHouse from '../models/HauntHouse.js';
+import { Router } from 'express';
+import * as houseController from '../controllers/houseController.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
 import { verifyHouseRole } from '../middleware/roleMiddleware.js'; // <-- Importamos el middleware de roles
 
-const router = express.Router();
+const router = Router();
 
 // GET /api/houses - Obtener todas las casas
 router.get('/', async (req, res) => {
