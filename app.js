@@ -5,8 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
 // Middleware de manejo centralizado de errores
-import { errorHandler } from '../middleware/errorHandler.js';
-
+import errorHandler from './middleware/errorHandler.js';
 // Importación de enrutadores del proyecto PhantomBids
 import authRoutes from './routes/authRoutes.js';
 import houseRoutes from './routes/houseRoutes.js';
