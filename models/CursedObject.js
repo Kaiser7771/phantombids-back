@@ -18,7 +18,28 @@ const cursedObjectSchema = new mongoose.Schema({
   baseCurse: { type: String, required: true, enum: PREDEFINED_CURSES },
   minBid: { type: Number, required: true, min: 1, max: 100 },
   maxBid: { type: Number, required: true },
-  durationDays: { type: Number, required: true, min: 1, max: 7 }
+  durationDays: { type: Number, required: true, min: 1, max: 7 },
+  // Relación obligatoria con la casa de subastas (HauntHouse)
+  house: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'HauntHouse', 
+    required: true 
+  },
+  // Estado de la subasta del objeto para el ciclo de vida (OPEN, CLOSED, CANCELLED)
+  status: { 
+    type: String, 
+    enum: ['OPEN', 'CLOSED', 'CANCELLED'], 
+    default: 'OPEN' 
+  },
+  winner: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    default: null 
+  },
+  winningBidAmount: { 
+    type: Number, 
+    default: null 
+  }
 }, { timestamps: true });
 
 export default mongoose.model('CursedObject', cursedObjectSchema);
