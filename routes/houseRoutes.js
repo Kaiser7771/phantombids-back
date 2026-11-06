@@ -29,40 +29,33 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// GET /api/houses/:id - Obtener una casa por ID (Protegido y validado si es privada)
-router.get('/:id', verifyToken, async (req, res) => {
+// GET /api/houses - Obtener todas las casas (con filtro de privacidad seguro)
+router.get('/', verifyToken, async (req, res) => {
   try {
-    const house = await HauntHouse.findById(req.params.id).populate('members.user', 'username email role');
+    const houses = await HauntHouse.find().populate('members.user', 'username email role');
     
-    if (!house) {
-      return res.status(404).json({ message: 'Casa embrujada no encontrada.' });
-    }
+    // Depuración para ver qué datos trae el token del usuario actual
+    console.log("Usuario autenticado en GET /houses:", req.user);
 
-    // Los administradores globales tienen pase libre
-    const isAdmin = req.user && (req.user.role === 'admin' || req.user.isAdmin);
+    // Verificamos el rol ignorando mayúsculas/minúsculas y revisando variantes comunes
+    const userRole = (req.user.role || '').toLowerCase();
+    const isAdmin = userRole === 'admin' || req.user.isAdmin === true;
+    const currentUserId = req.user.userId || req.user.id;
 
-    // Validar acceso si la casa es privada y el usuario no es admin
-    if (house.isPrivate && !isAdmin) {
-      const currentUserId = req.user.userId || req.user.id;
+    const filteredHouses = houses.filter(house => {
+      if (!house.isPrivate) return true;
+      if (isAdmin) return true;
+      
+      return house.members.some(member => {
+        if (!member.user) return false;
+        const memberId = member.user._id ? member.user._id.toString() : member.user.toString();
+        return memberId === currentUserId;
+      });
+    });
 
-      const isMember = house.members.some(
-        (member) => {
-          if (!member.user) return false;
-          const memberId = member.user._id ? member.user._id.toString() : member.user.toString();
-          return memberId === currentUserId;
-        }
-      );
-
-      if (!isMember) {
-        return res.status(403).json({ 
-          message: 'Acceso denegado. Esta casa es privada y requiere membresía o invitación.' 
-        });
-      }
-    }
-
-    res.json(house);
+    res.json(filteredHouses);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener la casa.', error: error.message });
+    res.status(500).json({ message: 'Error al obtener las casas.', error: error.message });
   }
 });
 
