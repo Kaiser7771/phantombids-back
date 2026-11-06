@@ -26,14 +26,17 @@ router.get('/:id', verifyToken, async (req, res) => {
 
     // Validar acceso si la casa es privada
     if (house.isPrivate) {
-      const isAdmin = req.user && req.user.role === 'admin';
+      const isAdmin = req.user && (req.user.role === 'admin' || req.user.isAdmin);
       
-      // Comprobar si el usuario actual pertenece a los miembros de la casa
+      // Obtenemos el ID del usuario correctamente desde el token decodificado (userId o id)
+      const currentUserId = req.user.userId || req.user.id;
+
       const isMember = house.members.some(
-        (member) => 
-          member.user._id.toString() === req.user.id || 
-          member.user._id.toString() === req.user.userId ||
-          member.user.toString() === req.user.id
+        (member) => {
+          if (!member.user) return false;
+          const memberId = member.user._id ? member.user._id.toString() : member.user.toString();
+          return memberId === currentUserId;
+        }
       );
 
       if (!isAdmin && !isMember) {
