@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import HauntHouse from '../models/houseModel.js'; // <-- Importación agregada para solucionar el error 500
+import HauntHouse from '../models/HauntHouse.js'; // <-- Importación agregada para solucionar el error 500
 import * as houseController from '../controllers/houseController.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
 import { verifyHouseRole } from '../middleware/roleMiddleware.js';
