@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import HauntHouse from '../models/HauntHouse.js';
+import User from '../models/User.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
 import { verifyHouseRole } from '../middleware/roleMiddleware.js';
 
@@ -24,11 +25,14 @@ router.get('/:id', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'Casa embrujada no encontrada.' });
     }
 
-    // Si es privada, verificamos permisos de Admin o Miembro
+    // Si la casa es privada, validamos permisos
     if (house.isPrivate) {
-      const userRole = (req.user && req.user.role ? req.user.role : '').toLowerCase();
-      const isAdmin = userRole === 'admin' || req.user?.isAdmin === true;
       const currentUserId = req.user.userId || req.user.id;
+
+      // Consulta directa a la base de datos para verificar el rol real del usuario
+      const userRecord = await User.findById(currentUserId);
+      const userRole = (userRecord?.role || req.user?.role || '').toLowerCase();
+      const isAdmin = userRole === 'admin' || req.user?.isAdmin === true;
 
       const isMember = house.members.some((member) => {
         if (!member.user) return false;
