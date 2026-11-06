@@ -5,16 +5,6 @@ import { verifyHouseRole } from '../middleware/roleMiddleware.js';
 
 const router = Router();
 
-// GET /api/houses - Obtener todas las casas
-router.get('/', async (req, res) => {
-  try {
-    const houses = await HauntHouse.find().populate('members.user', 'username email');
-    res.json(houses);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener las casas.', error: error.message });
-  }
-});
-
 // GET /api/houses - Obtener todas las casas (con filtro de privacidad)
 router.get('/', verifyToken, async (req, res) => {
   try {
@@ -39,6 +29,43 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/houses/:id - Obtener una casa por ID (Protegido y validado si es privada)
+router.get('/:id', verifyToken, async (req, res) => {
+  try {
+    const house = await HauntHouse.findById(req.params.id).populate('members.user', 'username email role');
+    
+    if (!house) {
+      return res.status(404).json({ message: 'Casa embrujada no encontrada.' });
+    }
+
+    // Los administradores globales tienen pase libre
+    const isAdmin = req.user && (req.user.role === 'admin' || req.user.isAdmin);
+
+    // Validar acceso si la casa es privada y el usuario no es admin
+    if (house.isPrivate && !isAdmin) {
+      const currentUserId = req.user.userId || req.user.id;
+
+      const isMember = house.members.some(
+        (member) => {
+          if (!member.user) return false;
+          const memberId = member.user._id ? member.user._id.toString() : member.user.toString();
+          return memberId === currentUserId;
+        }
+      );
+
+      if (!isMember) {
+        return res.status(403).json({ 
+          message: 'Acceso denegado. Esta casa es privada y requiere membresía o invitación.' 
+        });
+      }
+    }
+
+    res.json(house);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener la casa.', error: error.message });
+  }
+});
+
 // POST /api/houses - Crear una nueva casa (Protegido por Token)
 router.post('/', verifyToken, async (req, res) => {
   try {
@@ -51,7 +78,7 @@ router.post('/', verifyToken, async (req, res) => {
       coverImageUrl,
       isPrivate,
       inviteCode,
-      members: [{ user: req.user.id, role: 'Head Haunter' }]
+      members: [{ user: req.user.userId || req.user.id, role: 'Head Haunter' }]
     });
 
     await newHouse.save();
