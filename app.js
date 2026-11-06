@@ -27,7 +27,7 @@ app.use('/api/houses', houseRoutes);
 app.use('/api/auctions', auctionRoutes);
 app.use('/api/bets', betRoutes);
 app.use('/api/rankings', rankingRoutes);
-app.use('/api/objects', cursedObjectRoutes); // <-- NUEVO: Registrar el enrutador de objetos malditos
+app.use('/api/cursed-objects', cursedObjectRoutes); // <-- NUEVO: Registrar el enrutador de objetos malditos
 
 // Ruta base de chequeo de estado
 app.get('/', (req, res) => {

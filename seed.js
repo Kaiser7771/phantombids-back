@@ -34,28 +34,40 @@ const runSeed = async () => {
     console.log('🧹 Colecciones limpiadas correctamente.');
 
     // 2. Crear 12 Usuarios (Reputaciones: 120, 100, 95, 85, 80, 75, 70, 65, 60, 55, 50, 45)
+    
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('password123', salt);
+    const defaultPassword = await bcrypt.hash('password123', salt);
+    const adminPassword = await bcrypt.hash('Admin123*', salt);
+    const standardPassword = await bcrypt.hash('User123*', salt);
 
     const userConfigs = [
-      { username: 'PhantomKing', email: 'king@phantom.com', reputation: 120 },
-      { username: 'ShadowBider', email: 'shadow@phantom.com', reputation: 100 },
-      { username: 'SpookyCat', email: 'cat@phantom.com', reputation: 95 },
-      { username: 'GraveDigger', email: 'digger@phantom.com', reputation: 85 },
-      { username: 'BansheeWhisper', email: 'banshee@phantom.com', reputation: 80 },
-      { username: 'SpecterSeeker', email: 'specter@phantom.com', reputation: 75 },
-      { username: 'GhoulishGuest', email: 'ghoul@phantom.com', reputation: 70 },
-      { username: 'CryptKeeper', email: 'crypt@phantom.com', reputation: 65 },
-      { username: 'VampireLord', email: 'vampire@phantom.com', reputation: 60 },
-      { username: 'PoltergeistPaul', email: 'paul@phantom.com', reputation: 55 },
-      { username: 'HauntedHannah', email: 'hannah@phantom.com', reputation: 50 },
-      { username: 'CursedCharlie', email: 'charlie@phantom.com', reputation: 45 }
+      // Cuentas principales solicitadas
+      { username: 'SystemAdmin', email: 'admin@phantombids.com', password: adminPassword, reputation: 200, role: 'admin' },
+      { username: 'StandardUser', email: 'user@phantombids.com', password: standardPassword, reputation: 100, role: 'user' },
+      
+      // Usuarios de respaldo del seed original
+      { username: 'PhantomKing', email: 'king@phantom.com', password: defaultPassword, reputation: 120 },
+      { username: 'ShadowBider', email: 'shadow@phantom.com', password: defaultPassword, reputation: 100 },
+      { username: 'SpookyCat', email: 'cat@phantom.com', password: defaultPassword, reputation: 95 },
+      { username: 'GraveDigger', email: 'digger@phantom.com', password: defaultPassword, reputation: 85 },
+      { username: 'BansheeWhisper', email: 'banshee@phantom.com', password: defaultPassword, reputation: 80 },
+      { username: 'SpecterSeeker', email: 'specter@phantom.com', password: defaultPassword, reputation: 75 },
+      { username: 'GhoulishGuest', email: 'ghoul@phantom.com', password: defaultPassword, reputation: 70 },
+      { username: 'CryptKeeper', email: 'crypt@phantom.com', password: defaultPassword, reputation: 65 },
+      { username: 'VampireLord', email: 'vampire@phantom.com', password: defaultPassword, reputation: 60 },
+      { username: 'PoltergeistPaul', email: 'paul@phantom.com', password: defaultPassword, reputation: 55 },
+      { username: 'HauntedHannah', email: 'hannah@phantom.com', password: defaultPassword, reputation: 50 },
+      { username: 'CursedCharlie', email: 'charlie@phantom.com', password: defaultPassword, reputation: 45 }
     ];
 
+   // Como algunos ya traen su contraseña propia cifrada, adaptamos la inserción:
     const users = await User.insertMany(
-      userConfigs.map(u => ({ ...u, password: hashedPassword }))
+      userConfigs.map(u => ({
+        ...u,
+        password: u.password || defaultPassword
+      }))
     );
-    console.log(`👤 ${users.length} Usuarios creados.`);
+    console.log(`👤 ${users.length} Usuarios creados (incluyendo Admin y Estándar).`);
 
     // 3. Crear 3 Casas de Subastas (Temas: Darkness, Comedy, Terror)
     const housesData = [
@@ -63,6 +75,7 @@ const runSeed = async () => {
         name: 'The Obsidian Crypt',
         theme: 'Darkness',
         description: 'Una bóveda en la penumbra donde habitan las reliquias más oscuras.',
+        coverImageUrl: 'https://images.stockcake.com/public/c/d/e/cde63f52-14b0-42a2-9074-217254ee76de_large/ancient-temple-ruins-stockcake.jpg',
         isPrivate: false,
         members: [
           { user: users[0]._id, role: 'Head Haunter' },
@@ -75,6 +88,7 @@ const runSeed = async () => {
         name: 'The Laughing Skeleton Club',
         theme: 'Comedy',
         description: 'Lugar para subastas absurdas y maldiciones bromistas.',
+        coverImageUrl: 'https://img.freepik.com/fotos-premium/dos-esqueletos-sosteniendo-vasos-cerveza-frente-bar_590796-16499.jpg',
         isPrivate: false,
         members: [
           { user: users[4]._id, role: 'Head Haunter' },
@@ -87,6 +101,7 @@ const runSeed = async () => {
         name: 'Chamber of Screams',
         theme: 'Terror',
         description: 'Exclusiva para aquellos dispuestos a perder su propia cordura.',
+        coverImageUrl: 'https://img.freepik.com/fotos-premium/um-quarto-escuro-com-uma-cama-e-uma-cadeira-de-balanco_1236212-8361.jpg',
         isPrivate: true,
         inviteCode: 'SCREAM2026',
         members: [
@@ -101,16 +116,16 @@ const runSeed = async () => {
     const houses = await HauntHouse.insertMany(housesData);
     console.log(`🏰 ${houses.length} Casas embrujadas creadas.`);
 
-    // 4. Crear 8 Objetos Malditos (con las 8 maldiciones predefinidas)
+  // 4. Crear 8 Objetos Malditos (asociados a las casas creadas)
     const cursesData = [
-      { name: 'Espejo Susurrante', description: 'Refleja sombras inquietantes.', baseCurse: 'LOSE_10_REP', minBid: 5, maxBid: 150, durationDays: 3, imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233' },
-      { name: 'Muñeca de Porcelana Ojo Abierto', description: 'Parpadea cuando nadie la mira.', baseCurse: 'BAN_NEXT_2_AUCTIONS', minBid: 10, maxBid: 200, durationDays: 5, imageUrl: 'https://images.unsplash.com/photo-1509557965875-b88c97052f0e' },
-      { name: 'Caja de Música Desafinada', description: 'Toca melodías a las 3:00 AM.', baseCurse: 'CURSE_MARK_7_DAYS', minBid: 20, maxBid: 250, durationDays: 2, imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5' },
-      { name: 'Anillo del Lamento', description: 'Enfría la mano de quien lo porta.', baseCurse: 'REDUCE_BET_LIMIT', minBid: 15, maxBid: 180, durationDays: 4, imageUrl: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e' },
-      { name: 'Libro de Páginas Blancas', description: 'Se escribe solo durante la noche.', baseCurse: 'POLTERGEIST_24H', minBid: 30, maxBid: 300, durationDays: 6, imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c' },
-      { name: 'Reloj de Arena Invertido', description: 'El tiempo avanza al revés a su alrededor.', baseCurse: 'PUBLIC_SHAME_ROLE', minBid: 50, maxBid: 400, durationDays: 7, imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5' },
-      { name: 'Vela de Cera Negra', description: 'Su llama proyecta sombras opuestas.', baseCurse: 'REPUTATION_DRAIN_PER_DAY', minBid: 8, maxBid: 120, durationDays: 1, imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233' },
-      { name: 'Retrato sin Rostro', description: 'Cambia la fisonomía de quien lo observa.', baseCurse: 'SILENCE_IN_HOUSE', minBid: 25, maxBid: 220, durationDays: 3, imageUrl: 'https://images.unsplash.com/photo-1509557965875-b88c97052f0e' }
+      { name: 'Espejo Susurrante', description: 'Refleja sombras inquietantes.', baseCurse: 'LOSE_10_REP', minBid: 5, maxBid: 150, durationDays: 3, imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233', house: houses[0]._id },
+      { name: 'Muñeca de Porcelana Ojo Abierto', description: 'Parpadea cuando nadie la mira.', baseCurse: 'BAN_NEXT_2_AUCTIONS', minBid: 10, maxBid: 200, durationDays: 5, imageUrl: 'https://images.unsplash.com/photo-1509557965875-b88c97052f0e', house: houses[0]._id },
+      { name: 'Caja de Música Desafinada', description: 'Toca melodías a las 3:00 AM.', baseCurse: 'CURSE_MARK_7_DAYS', minBid: 20, maxBid: 250, durationDays: 2, imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5', house: houses[1]._id },
+      { name: 'Anillo del Lamento', description: 'Enfría la mano de quien lo porta.', baseCurse: 'REDUCE_BET_LIMIT', minBid: 15, maxBid: 180, durationDays: 4, imageUrl: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e', house: houses[1]._id },
+      { name: 'Libro de Páginas Blancas', description: 'Se escribe solo durante la noche.', baseCurse: 'POLTERGEIST_24H', minBid: 30, maxBid: 300, durationDays: 6, imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c', house: houses[2]._id },
+      { name: 'Reloj de Arena Invertido', description: 'El tiempo avanza al revés a su alrededor.', baseCurse: 'PUBLIC_SHAME_ROLE', minBid: 50, maxBid: 400, durationDays: 7, imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5', house: houses[2]._id },
+      { name: 'Vela de Cera Negra', description: 'Su llama proyecta sombras opuestas.', baseCurse: 'REPUTATION_DRAIN_PER_DAY', minBid: 8, maxBid: 120, durationDays: 1, imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233', house: houses[0]._id },
+      { name: 'Retrato sin Rostro', description: 'Cambia la fisonomía de quien lo observa.', baseCurse: 'SILENCE_IN_HOUSE', minBid: 25, maxBid: 220, durationDays: 3, imageUrl: 'https://images.unsplash.com/photo-1509557965875-b88c97052f0e', house: houses[1]._id }
     ];
 
     const objects = await CursedObject.insertMany(cursesData);
