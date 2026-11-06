@@ -5,57 +5,48 @@ import { verifyHouseRole } from '../middleware/roleMiddleware.js';
 
 const router = Router();
 
-// GET /api/houses - Obtener todas las casas (con filtro de privacidad)
-router.get('/', verifyToken, async (req, res) => {
+// GET /api/houses - Obtener TODAS las casas (públicas y privadas visibles para todos)
+router.get('/', async (req, res) => {
   try {
     const houses = await HauntHouse.find().populate('members.user', 'username email role');
-    const isAdmin = req.user && req.user.role === 'admin';
-    const currentUserId = req.user.userId || req.user.id;
-
-    const filteredHouses = houses.filter(house => {
-      if (!house.isPrivate) return true;
-      if (isAdmin) return true;
-      
-      return house.members.some(member => {
-        if (!member.user) return false;
-        const memberId = member.user._id ? member.user._id.toString() : member.user.toString();
-        return memberId === currentUserId;
-      });
-    });
-
-    res.json(filteredHouses);
+    res.json(houses);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener las casas.', error: error.message });
   }
 });
 
-// GET /api/houses - Obtener todas las casas (con filtro de privacidad seguro)
-router.get('/', verifyToken, async (req, res) => {
+// GET /api/houses/:id - Obtener detalle de la casa (Solo Admin o Miembros pueden entrar a las Privadas)
+router.get('/:id', verifyToken, async (req, res) => {
   try {
-    const houses = await HauntHouse.find().populate('members.user', 'username email role');
+    const house = await HauntHouse.findById(req.params.id).populate('members.user', 'username email role');
     
-    // Depuración para ver qué datos trae el token del usuario actual
-    console.log("Usuario autenticado en GET /houses:", req.user);
+    if (!house) {
+      return res.status(404).json({ message: 'Casa embrujada no encontrada.' });
+    }
 
-    // Verificamos el rol ignorando mayúsculas/minúsculas y revisando variantes comunes
-    const userRole = (req.user.role || '').toLowerCase();
-    const isAdmin = userRole === 'admin' || req.user.isAdmin === true;
-    const currentUserId = req.user.userId || req.user.id;
+    // Si es privada, verificamos permisos de Admin o Miembro
+    if (house.isPrivate) {
+      const userRole = (req.user && req.user.role ? req.user.role : '').toLowerCase();
+      const isAdmin = userRole === 'admin' || req.user?.isAdmin === true;
+      const currentUserId = req.user.userId || req.user.id;
 
-    const filteredHouses = houses.filter(house => {
-      if (!house.isPrivate) return true;
-      if (isAdmin) return true;
-      
-      return house.members.some(member => {
+      const isMember = house.members.some((member) => {
         if (!member.user) return false;
         const memberId = member.user._id ? member.user._id.toString() : member.user.toString();
         return memberId === currentUserId;
       });
-    });
 
-    res.json(filteredHouses);
+      // Si no es Admin ni tampoco Miembro, denegamos el acceso
+      if (!isAdmin && !isMember) {
+        return res.status(403).json({ 
+          message: 'Acceso denegado: Esta casa es privada y requiere permisos de Administrador o invitación.' 
+        });
+      }
+    }
+
+    res.json(house);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener las casas.', error: error.message });
+    res.status(500).json({ message: 'Error al obtener la casa.', error: error.message });
   }
 });
 
@@ -81,7 +72,7 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// PUT /api/houses/:id - Actualizar una casa embrujada (Solo Head Haunter o Admin)
+// PUT /api/houses/:id - Actualizar una casa (Solo Head Haunter o Admin)
 router.put('/:id', verifyToken, verifyHouseRole(['Head Haunter']), async (req, res, next) => {
   try {
     const { name, theme, description, coverImageUrl, isPrivate, inviteCode } = req.body;
@@ -102,7 +93,7 @@ router.put('/:id', verifyToken, verifyHouseRole(['Head Haunter']), async (req, r
   }
 });
 
-// DELETE /api/houses/:id - Eliminar una casa embrujada (Solo Head Haunter o Admin)
+// DELETE /api/houses/:id - Eliminar una casa (Solo Head Haunter o Admin)
 router.delete('/:id', verifyToken, verifyHouseRole(['Head Haunter']), async (req, res, next) => {
   try {
     const deletedHouse = await HauntHouse.findByIdAndDelete(req.params.id);
