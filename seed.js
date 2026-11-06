@@ -75,6 +75,7 @@ const runSeed = async () => {
         name: 'The Obsidian Crypt',
         theme: 'Darkness',
         description: 'Una bóveda en la penumbra donde habitan las reliquias más oscuras.',
+        coverImageUrl: 'https://images.stockcake.com/public/c/d/e/cde63f52-14b0-42a2-9074-217254ee76de_large/ancient-temple-ruins-stockcake.jpg',
         isPrivate: false,
         members: [
           { user: users[0]._id, role: 'Head Haunter' },
@@ -87,6 +88,7 @@ const runSeed = async () => {
         name: 'The Laughing Skeleton Club',
         theme: 'Comedy',
         description: 'Lugar para subastas absurdas y maldiciones bromistas.',
+        coverImageUrl: 'https://img.freepik.com/fotos-premium/dos-esqueletos-sosteniendo-vasos-cerveza-frente-bar_590796-16499.jpg',
         isPrivate: false,
         members: [
           { user: users[4]._id, role: 'Head Haunter' },
@@ -99,6 +101,7 @@ const runSeed = async () => {
         name: 'Chamber of Screams',
         theme: 'Terror',
         description: 'Exclusiva para aquellos dispuestos a perder su propia cordura.',
+        coverImageUrl: 'https://img.freepik.com/fotos-premium/um-quarto-escuro-com-uma-cama-e-uma-cadeira-de-balanco_1236212-8361.jpg',
         isPrivate: true,
         inviteCode: 'SCREAM2026',
         members: [

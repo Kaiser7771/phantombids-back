@@ -15,13 +15,34 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/houses/:id - Obtener una casa por ID
-router.get('/:id', async (req, res) => {
+// GET /api/houses/:id - Obtener una casa por ID (Protegido y validado si es privada)
+router.get('/:id', verifyToken, async (req, res) => {
   try {
-    const house = await HauntHouse.findById(req.params.id).populate('members.user', 'username email');
+    const house = await HauntHouse.findById(req.params.id).populate('members.user', 'username email role');
+    
     if (!house) {
       return res.status(404).json({ message: 'Casa embrujada no encontrada.' });
     }
+
+    // Validar acceso si la casa es privada
+    if (house.isPrivate) {
+      const isAdmin = req.user && req.user.role === 'admin';
+      
+      // Comprobar si el usuario actual pertenece a los miembros de la casa
+      const isMember = house.members.some(
+        (member) => 
+          member.user._id.toString() === req.user.id || 
+          member.user._id.toString() === req.user.userId ||
+          member.user.toString() === req.user.id
+      );
+
+      if (!isAdmin && !isMember) {
+        return res.status(403).json({ 
+          message: 'Acceso denegado. Esta casa es privada y requiere membresía o invitación.' 
+        });
+      }
+    }
+
     res.json(house);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener la casa.', error: error.message });
